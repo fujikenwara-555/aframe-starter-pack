@@ -16,7 +16,7 @@ To Setup Your Code and Live Site (GitHub and GitHub Pages) first **sign in or cr
 
 1. Once logged in, go to the [Example Code Repo](https://github.com/sheiva/aframe-starter-pack): https://github.com/sheiva/aframe-starter-pack
 2. Click **Fork** in the top right corner.
-> *This makes your own copy of the example repo that you can edit freely*
+> *This step ^ makes your own copy of the example repo that you can **edit freely***
 
 
 ### Publish Your Live A-Frame Site
