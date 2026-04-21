@@ -1,15 +1,58 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"> </script>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
   </head>
   <body>
     <a-scene>
-      <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
-      <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
-      <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-      <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
-      <a-sky color="#ECECEC"></a-sky>
+      <a-assets>
+        <img id="sand" src="assets/sand.jpg">
+        <img id="sky360" src="assets/weirdclassroom.jpg">
+        <img id="fur" src="assets/fur.jpg">
+        <a-asset-item id="dragon1" src="assets/Dragon Rigged.glb"></a-asset-item>
+        <a-asset-item id="dragon2" src="assets/Dragon.glb"></a-asset-item>
+      </a-assets>
+
+      <!-- Equirectangular sky -->
+      <a-sky src="#sky360"></a-sky>
+
+      <!-- Sand/Lava Ground -->
+      <a-plane src="#sand" position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#f4d03f"></a-plane>
+
+      <!-- Fur cylinder -->
+      <a-cylinder src="#fur" position="0 0.5 -2" radius="0.3" height="1"></a-cylinder>
+
+      <!-- Fur cone -->
+      <a-cone src="#fur" position="-1 0.4 -2" radius-bottom="0.4" radius-top="0" height="0.8"></a-cone>
+
+      <!-- Fur ball -->
+      <a-sphere src="#fur" position="1 0.4 -2" radius="0.4"></a-sphere>
+
+      <!-- Fur textured box -->
+      <a-box src="#fur" position="-2 0.5 -3" width="1" height="1" depth="1"></a-box>
+
+      <!-- Fur textured sphere -->
+      <a-sphere src="#fur" position="2 0.6 -3" radius="0.6"></a-sphere>
+
+      <!-- Dragon 1 (Rigged) - left side -->
+      <a-entity
+        gltf-model="#dragon1"
+        position="-3 0 -5"
+        scale="0.5 0.5 0.5"
+        rotation="0 45 0">
+      </a-entity>
+
+      <!-- Dragon 2 - right side -->
+      <a-entity
+        gltf-model="#dragon2"
+        position="3 0 -5"
+        scale="0.5 0.5 0.5"
+        rotation="0 -45 0">
+      </a-entity>
+
+      <!-- Title: Weird Summer World | Description: A surreal beach scene with dragons, fur textures, and a strange classroom sky -->
+      <!-- Assets: sand.jpg - google, weirdclassroom.jpg - google, fur.jpg - google, Dragon Rigged.glb - Poly Pizza, Dragon.glb - Poly Pizza -->
+
     </a-scene>
   </body>
 </html>
