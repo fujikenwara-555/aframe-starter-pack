@@ -350,43 +350,76 @@
       margin-bottom: 2px;
     }
 
-    /* Ethanol % slider buttons */
-    .eth-options {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
+    /* Ethanol slider */
+    .eth-slider-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .eth-opt {
-      padding: 8px 4px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
+    .eth-slider-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .eth-slider-readout {
       font-family: var(--display);
-      font-size: 17px;
-      letter-spacing: 1px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.12s;
-    }
-
-    .eth-opt .opt-label {
-      display: block;
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
-      margin-top: 1px;
-    }
-
-    .eth-opt.selected {
-      border-color: var(--green);
+      font-size: 36px;
       color: var(--green);
-      background: var(--green-glow);
+      letter-spacing: 2px;
+      line-height: 1;
     }
 
-    .eth-opt.selected .opt-label { color: var(--green); }
+    .eth-slider-hint {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .eth-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--text-dim);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .eth-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--green);
+      cursor: pointer;
+      border: 3px solid var(--bg3);
+    }
+
+    .eth-slider::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--green);
+      cursor: pointer;
+      border: 3px solid var(--bg3);
+    }
+
+    .eth-tick-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      padding: 0 2px;
+    }
 
     .submit-inline {
       padding: 10px;
@@ -536,21 +569,8 @@
   let userLat     = null;
   let userLon     = null;
 
-  // ratings: { stationId -> [{ethPct, ts}] }
+  // ratings: { stationId -> [{pct, ts}] }
   let ratings = JSON.parse(localStorage.getItem('ff_eth_ratings') || '{}');
-
-  // selected ethanol % per open rating form
-  let pendingEth  = {};  // stationId -> selected pct string
-
-  // ── Ethanol % options ────────────────────────────────────────────
-  // E85 real-world range is ~51–83% ethanol depending on season/region
-  const ETH_OPTS = [
-    { label: '51%', pct: 51, tag: 'low' },
-    { label: '60%', pct: 60, tag: '' },
-    { label: '68%', pct: 68, tag: 'avg' },
-    { label: '75%', pct: 75, tag: '' },
-    { label: '83%', pct: 83, tag: 'high' },
-  ];
 
   // ── Helpers ──────────────────────────────────────────────────────
   function haversine(lat1, lon1, lat2, lon2) {
@@ -576,8 +596,7 @@
   }
 
   function ethBarPct(pct) {
-    // 51% → 0%, 83% → 100%
-    return Math.round(((pct - 51) / 32) * 100);
+    return pct; // 0–100 maps directly
   }
 
   function setStatus(msg, state) {
@@ -744,20 +763,24 @@
         </div>`;
     }
 
-    // inline rate form
-    const opts = ETH_OPTS.map(o => `
-      <button class="eth-opt" onclick="selectEth(${id},'${o.pct}',this)">
-        ${o.label}
-        <span class="opt-label">${o.tag}</span>
-      </button>`).join('');
-
     const rateBlock = `
       <div class="rate-section" id="ratesec-${id}">
         <button class="rate-toggle" onclick="toggleRate(${id})">+ Report Ethanol Content</button>
         <div class="rate-form" id="rateform-${id}">
-          <div class="rate-prompt">Select ethanol % you received:</div>
-          <div class="eth-options">${opts}</div>
-          <button class="submit-inline" onclick="submitRating(${id})" disabled id="submitbtn-${id}">
+          <div class="rate-prompt">Drag to set ethanol % received:</div>
+          <div class="eth-slider-wrap">
+            <div class="eth-slider-top">
+              <div class="eth-slider-readout" id="sliderval-${id}">E50</div>
+              <div class="eth-slider-hint">E0 = gasoline<br>E85 = standard flex<br>E100 = pure ethanol</div>
+            </div>
+            <input type="range" class="eth-slider" min="0" max="100" value="50" step="1"
+              id="slider-${id}"
+              oninput="updateSlider(${id}, this.value)">
+            <div class="eth-tick-row">
+              <span>E0</span><span>E25</span><span>E50</span><span>E75</span><span>E100</span>
+            </div>
+          </div>
+          <button class="submit-inline" onclick="submitRating(${id})" id="submitbtn-${id}">
             Submit Report
           </button>
         </div>
@@ -799,25 +822,27 @@
     form.classList.toggle('open');
   }
 
-  function selectEth(id, pct, el) {
-    // deselect siblings
-    const opts = el.closest('.eth-options').querySelectorAll('.eth-opt');
-    opts.forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    pendingEth[id] = parseInt(pct);
-    document.getElementById('submitbtn-' + id).disabled = false;
+  function updateSlider(id, val) {
+    document.getElementById('sliderval-' + id).textContent = 'E' + val;
+    // color the readout based on value
+    const el = document.getElementById('sliderval-' + id);
+    if (val >= 70) el.style.color = 'var(--green)';
+    else if (val >= 40) el.style.color = 'var(--amber)';
+    else el.style.color = 'var(--red)';
+    // update slider track fill
+    const slider = document.getElementById('slider-' + id);
+    slider.style.background = `linear-gradient(to right, var(--green) ${val}%, var(--text-dim) ${val}%)`;
   }
 
   function submitRating(id) {
-    const pct = pendingEth[id];
-    if (!pct) return;
+    const slider = document.getElementById('slider-' + id);
+    const pct = parseInt(slider.value);
 
     if (!ratings[id]) ratings[id] = [];
     ratings[id].push({ pct, ts: new Date().toISOString() });
     saveRatings();
-    delete pendingEth[id];
 
-    showToast('Report saved — thanks!');
+    showToast(`E${pct} reported — thanks!`);
 
     // re-render just this card
     const card = document.getElementById('card-' + id);
