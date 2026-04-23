@@ -306,6 +306,90 @@
       transition: width 0.5s ease;
     }
 
+    /* TIMELINE */
+    .timeline-toggle {
+      background: transparent;
+      border: none;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 4px 0 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: var(--text-dim);
+    }
+
+    .timeline-toggle:hover { color: var(--amber); }
+
+    .timeline {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 10px;
+      border-left: 1px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .timeline.open { display: flex; }
+
+    .tl-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      position: relative;
+    }
+
+    .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -16px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .tl-val {
+      font-family: var(--display);
+      font-size: 18px;
+      letter-spacing: 1px;
+      line-height: 1;
+      min-width: 36px;
+    }
+
+    .tl-bar-wrap {
+      flex: 1;
+      height: 3px;
+      background: var(--text-dim);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .tl-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .tl-date {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .tl-age {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
     /* RATE INLINE */
     .rate-section {
       border-top: 1px solid var(--border);
@@ -740,6 +824,23 @@
     if (avg !== null) {
       const color  = ethColor(avg);
       const barPct = ethBarPct(avg);
+
+      // build timeline rows — newest first
+      const tlRows = arr.slice().reverse().map(r => {
+        const rColor = ethColor(r.pct);
+        const d = new Date(r.ts);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+        const ageDays = Math.floor((Date.now() - d) / 86400000);
+        const ageStr = ageDays === 0 ? 'today' : ageDays === 1 ? '1d ago' : ageDays < 30 ? `${ageDays}d ago` : ageDays < 365 ? `${Math.floor(ageDays/30)}mo ago` : `${Math.floor(ageDays/365)}yr ago`;
+        return `
+          <div class="tl-item">
+            <div class="tl-val" style="color:${rColor}">E${r.pct}</div>
+            <div class="tl-bar-wrap"><div class="tl-bar-fill" style="width:${r.pct}%;background:${rColor}"></div></div>
+            <div class="tl-date">${dateStr}</div>
+            <div class="tl-age">${ageStr}</div>
+          </div>`;
+      }).join('');
+
       ethBlock = `
         <div class="ethanol-section">
           <div class="eth-header">
@@ -749,11 +850,15 @@
             </div>
             <div class="eth-value-row">
               <div class="eth-number" style="color:${color}">${avg}</div>
-              <div class="eth-unit">%</div>
+              <div class="eth-unit">% avg</div>
             </div>
           </div>
           <div class="eth-bar-track">
             <div class="eth-bar-fill" style="width:${barPct}%;background:${color}"></div>
+          </div>
+          <button class="timeline-toggle" onclick="toggleTimeline(${id})">▸ Show history</button>
+          <div class="timeline" id="tl-${id}">
+            ${tlRows}
           </div>
         </div>`;
     } else {
@@ -814,6 +919,13 @@
           </a>
         </div>
       </div>`;
+  }
+
+  function toggleTimeline(id) {
+    const tl = document.getElementById('tl-' + id);
+    const btn = tl.previousElementSibling;
+    tl.classList.toggle('open');
+    btn.textContent = tl.classList.contains('open') ? '▾ Hide history' : '▸ Show history';
   }
 
   // ── Rating interactions ──────────────────────────────────────────
