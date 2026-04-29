@@ -1154,9 +1154,15 @@
 
 <script>
   // ── Firebase setup ────────────────────────────────────────────────
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: (typeof CONFIG !== 'undefined') ? CONFIG.FIREBASE_KEY : '',
-  ...
+  authDomain: "e85-radar.firebaseapp.com",
+  databaseURL: "https://e85-radar-default-rtdb.firebaseio.com",
+  projectId: "e85-radar",
+  storageBucket: "e85-radar.firebasestorage.app",
+  messagingSenderId: "852418099897",
+  appId: "1:852418099897:web:1a33784f27563c9dc97968",
+  measurementId: "G-MM7MTLMK3Q"
 };
 
   firebase.initializeApp(firebaseConfig);
